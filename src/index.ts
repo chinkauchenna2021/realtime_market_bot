@@ -2,51 +2,64 @@
 import { Context, Markup, Telegraf } from "telegraf";
 import { config } from "dotenv";
 import { WebSocket } from "ws";
+import express, { Request ,Response } from "express";
 config();
 
 // @ts-ignore
 const bot: Telegraf<Context<Update>> = new Telegraf(
-  String(process.env.BOT_TOKEN)
+  "7098616504:AAHtP-_9NfEZb9JkVsyxcsp4Q9sXUKDDrSk"
 );
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const chatId: number = 1266724954;
-
+const app = express() ;
 // const coin = "ethusdt";
 // wss://stream.binance.com:9443
 // const ws = new WebSocket(`wss://testnet.binance.vision/ws/${coin}@depth`);
+
+
+
 const ws = new WebSocket(
- String(process.env.WEBSOCKET_URL)
+  "wss://data-stream.binance.vision:9443/ws/ethusdt@depth"
 );
 
-import { ChildProcessWithoutNullStreams, spawn } from "child_process";
+// import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { Update, CallbackQuery } from "telegraf/typings/core/types/typegram";
 
-let appProcess: ChildProcessWithoutNullStreams;
+// let appProcess: ChildProcessWithoutNullStreams;
 const GREATER_TIME = 700000;
 const LESS_TIME = 100000;
+const port = 3000 ; 
 
-function startApp() {
-  try {
-    console.log("Starting app...");
-    appProcess = spawn("node", ["build/index.js"]);
 
-    appProcess.stdout.on("data", (data) => {
-      console.log(`stdout: ${data}`);
-    });
+app.get('/',(req:Request , res:Response)=>{
+    res.json({response:"bot started successfully..."})
+})
 
-    appProcess.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
 
-    appProcess.on("close", (code) => {
-      console.log(`App process exited with code ${code}`);
-      // Automatically restart the app if it crashes
-      startApp();
-    });
-  } catch (err) {
-    console.log(err);
-  }
-}
+app.listen(port , ()=>{
+  console.log(`Server running at http://localhost:${port}`);
+})
+// function startApp() {
+//   try {
+//     console.log("Starting app...");
+//     appProcess = spawn("node", ["index.js"]);
+
+//     appProcess.stdout.on("data", (data) => {
+//       console.log(`stdout: ${data}`);
+//     });
+
+//     appProcess.stderr.on("data", (data) => {
+//       console.error(`stderr: ${data}`);
+//     });
+
+//     appProcess.on("close", (code) => {
+//       console.log(`App process exited with code ${code}`);
+//       // Automatically restart the app if it crashes
+//     });
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }
 
 bot.start(async (ctx) => {
   try {
@@ -508,11 +521,12 @@ bot.action("quit_bot", (ctx) => {
   try {
     const userId = ctx.from.id;
     if (userId) {
-      ctx.leaveChat();
-      ws.on("close", () => {
-        console.log("WebSocket connection closed");
-      });
-      startApp();
+      if (ws) {
+        ws.close();
+        ctx.reply('Market Sells Signal Closed connection closed.');
+      } else {
+        ctx.reply('Market Sells Signal connection is not active.');
+      }    
     }
   } catch (err) {
     console.log(err);
@@ -528,7 +542,6 @@ bot.on("message", async (ctx) => {
       ws.on("close", () => {
         console.log("WebSocket connection closed");
       });
-      startApp();
     }
   } catch (err) {
     console.log(err);

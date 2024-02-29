@@ -8,44 +8,53 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 const telegraf_1 = require("telegraf");
 const dotenv_1 = require("dotenv");
 const ws_1 = require("ws");
+const express_1 = __importDefault(require("express"));
 (0, dotenv_1.config)();
 // @ts-ignore
-const bot = new telegraf_1.Telegraf(String(process.env.BOT_TOKEN));
+const bot = new telegraf_1.Telegraf("7098616504:AAHtP-_9NfEZb9JkVsyxcsp4Q9sXUKDDrSk");
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const chatId = 1266724954;
+const app = (0, express_1.default)();
 // const coin = "ethusdt";
 // wss://stream.binance.com:9443
 // const ws = new WebSocket(`wss://testnet.binance.vision/ws/${coin}@depth`);
-const ws = new ws_1.WebSocket(String(process.env.WEBSOCKET_URL));
-const child_process_1 = require("child_process");
-let appProcess;
+const ws = new ws_1.WebSocket("wss://data-stream.binance.vision:9443/ws/ethusdt@depth");
+// let appProcess: ChildProcessWithoutNullStreams;
 const GREATER_TIME = 700000;
 const LESS_TIME = 100000;
-function startApp() {
-    try {
-        console.log("Starting app...");
-        appProcess = (0, child_process_1.spawn)("node", ["build/index.js"]);
-        appProcess.stdout.on("data", (data) => {
-            console.log(`stdout: ${data}`);
-        });
-        appProcess.stderr.on("data", (data) => {
-            console.error(`stderr: ${data}`);
-        });
-        appProcess.on("close", (code) => {
-            console.log(`App process exited with code ${code}`);
-            // Automatically restart the app if it crashes
-            startApp();
-        });
-    }
-    catch (err) {
-        console.log(err);
-    }
-}
+const port = 3000;
+app.get('/', (req, res) => {
+    res.json({ response: "bot started successfully..." });
+});
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
+// function startApp() {
+//   try {
+//     console.log("Starting app...");
+//     appProcess = spawn("node", ["index.js"]);
+//     appProcess.stdout.on("data", (data) => {
+//       console.log(`stdout: ${data}`);
+//     });
+//     appProcess.stderr.on("data", (data) => {
+//       console.error(`stderr: ${data}`);
+//     });
+//     appProcess.on("close", (code) => {
+//       console.log(`App process exited with code ${code}`);
+//       // Automatically restart the app if it crashes
+//     });
+//   } catch (err) {
+//     console.log(err);
+//   }
+// }
 bot.start((ctx) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = ctx.from.id;
@@ -432,11 +441,13 @@ bot.action("quit_bot", (ctx) => {
     try {
         const userId = ctx.from.id;
         if (userId) {
-            ctx.leaveChat();
-            ws.on("close", () => {
-                console.log("WebSocket connection closed");
-            });
-            startApp();
+            if (ws) {
+                ws.close();
+                ctx.reply('Market Sells Signal Closed connection closed.');
+            }
+            else {
+                ctx.reply('Market Sells Signal connection is not active.');
+            }
         }
     }
     catch (err) {
@@ -452,7 +463,6 @@ bot.on("message", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
             ws.on("close", () => {
                 console.log("WebSocket connection closed");
             });
-            startApp();
         }
     }
     catch (err) {
