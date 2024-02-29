@@ -9,7 +9,7 @@
   "scripts": {
     "build": "rimraf ./build && tsc ",
     "dev": "npm run build && nodemon build/index.js",
-    "start": "node ./build/index.js --ignore-engines",
+    "start": "npm run build && node build/index.js --ignore-engines",
     "linting": "npx eslint . --ext .ts"
   },
   "keywords": [],
